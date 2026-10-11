@@ -1,0 +1,286 @@
+import os
+import csv
+import uuid
+import json
+import io
+import urllib.parse
+import time
+from datetime import datetime, timedelta
+from typing import List, Dict, Any
+from collections import Counter
+
+from flask import Flask, request, jsonify, render_template, send_file
+from flask_cors import CORS
+from dotenv import load_dotenv
+from google import genai
+from google.genai.errors import ServerError
+
+
+# ------------------ CONFIG ------------------
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY not found in .env")
+
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+app = Flask(__name__)
+CORS(app)
+
+
+# ------------------ FILES ------------------
+CSV_FILE = "records.csv"
+REMINDER_FILE = "reminders.csv"
+
+if not os.path.exists(CSV_FILE):
+    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerow([
+            "id", "name", "department", "timestamp",
+            "transcript", "summary", "sentiment", "ai_output", "reminder"
+        ])
+
+if not os.path.exists(REMINDER_FILE):
+    with open(REMINDER_FILE, "w", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerow([
+            "id", "detected_text", "minutes", "remind_time", "created_at"
+        ])
+
+
+# ------------------ MASTER PROMPT ------------------
+MASTER_PROMPT = """
+You are an advanced AI Voice Intelligence System.
+
+
+Your tasks:
+- Detect how many speakers are talking.
+- Identify speakers separately (Speaker 1, Speaker 2...).
+- Understand voice of each speaker and store it in your memory
+- If a speaker reveals a name or job role, assign it.
+- Translate ALL speech to Hinglish (no matter original language).
+- Create structured transcripts WITH speaker labels.
+- Detect sentiment per speaker.
+- Detect overall emotion (happy, sad, stressed, angry, confident).
+- Extract summary in 3 levels: short, medium, detailed.
+- Extract action items (tasks, deadlines, follow-ups).
+- Create an email if someone asks to send them an email.
+- Extract keywords/topics.
+- Extract important info: emails, phone numbers, URLs, social media profiles.
+- Detect meeting type or conversation topic automatically.
+- Generate clean JSON only.
+
+
+OUTPUT STRICT JSON ONLY:
+
+
+{
+  "languages": ["en"],
+  "topic": "<detected_topic>",
+  "speakers": {
+      "count": 2,
+      "details": [
+          {"id": 1, "name": "Vinit", "role": "Developer", "sentiment": "positive", "emotion": "confident"},
+          {"id": 2, "name": "Rahul", "role": "Manager", "sentiment": "neutral", "emotion": "calm"}
+      ]
+  },
+  "transcription": "Speaker 1: <text>\\nSpeaker 2: <text>",
+  "summary": {
+      "short": "1–2 line summary",
+      "medium": ["point1","point2","point3"],
+      "detailed": "<long summary paragraph>"
+  },
+  "action_items": [
+      "Submit the report by evening",
+      "Call the client tomorrow"
+  ],
+  "keywords": ["Infosys","Project Update","Meeting"],
+  "important_info": {
+      "emails": [],
+      "phones": [],
+      "urls": [],
+      "social": {
+          "linkedin": "",
+          "instagram": "",
+          "facebook": ""
+      }
+  },
+  "smart_reminders_detected": [],
+  "sentiment_overall": "neutral",
+  "emotion_overall": "calm"
+  "email": "Hello, Mr. ,
+  It was pleasure talking to you about..."
+}
+"""
+
+
+# ------------------ AI PROCESSING ------------------
+def process_audio_through_ai(audio_bytes: bytes, mime_type: str) -> str:
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": MASTER_PROMPT},
+                            {
+                                "inline_data": {
+                                    "mime_type": mime_type,
+                                    "data": audio_bytes
+                                }
+                            }
+                        ]
+                    }
+                ]
+            )
+            return response.text or ""
+
+        except ServerError as e:
+            if e.status_code == 503 and attempt < 2:
+                print(f"Gemini overloaded, retrying... ({attempt+1})")
+                time.sleep(2 ** attempt)
+            else:
+                raise
+
+    return ""
+
+
+# ------------------ JSON SAFE PARSER ------------------
+def safe_json_extract(text: str) -> Dict[str, Any]:
+    try:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start == -1 or end <= start:
+            return {}
+        return json.loads(text[start:end])
+    except Exception:
+        return {}
+
+
+# ------------------ REMINDER EXTRACT ------------------
+def extract_minutes(ai_json: Dict[str, Any]):
+    reminders = ai_json.get("smart_reminders_detected", []) or []
+    for r in reminders:
+        if not isinstance(r, str):
+            continue
+        digits = "".join(c for c in r if c.isdigit())
+        if not digits:
+            continue
+        n = int(digits)
+        if "hour" in r.lower():
+            return n * 60, r
+        if "minute" in r.lower():
+            return n, r
+    return None, None
+
+
+# ------------------ CSV HELPERS ------------------
+def save_record(record: Dict[str, Any]):
+    with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerow([
+            record["id"],
+            record["name"],
+            record["department"],
+            record["timestamp"],
+            record["transcript"],
+            json.dumps(record["summary"]),
+            json.dumps(record["sentiment"]),
+            json.dumps(record["ai_output"]),
+            json.dumps(record["reminder"])
+        ])
+
+
+def load_records() -> List[Dict[str, Any]]:
+    if not os.path.exists(CSV_FILE):
+        return []
+    with open(CSV_FILE, encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+# ============================================================
+#                       ROUTES
+# ============================================================
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    try:
+        audio = request.files.get("audio")
+        if not audio:
+            return jsonify({"error": "No audio uploaded"}), 400
+
+        audio_bytes = audio.read()
+        mime_type = audio.content_type or "audio/wav"
+
+        ai_text = process_audio_through_ai(audio_bytes, mime_type)
+        if not ai_text:
+            return jsonify({"error": "Empty response from Gemini"}), 500
+
+        ai_json = safe_json_extract(ai_text)
+
+        mins, detected = extract_minutes(ai_json)
+        reminder = None
+
+        if mins:
+            remind_time = datetime.now() + timedelta(minutes=mins)
+            reminder = {
+                "minutes": mins,
+                "detected_text": detected,
+                "remind_time": remind_time.strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+        record = {
+            "id": str(uuid.uuid4()),
+            "name": request.form.get("name", "Unknown"),
+            "department": request.form.get("department", "General"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "transcript": ai_json.get("transcription", ""),
+            "summary": ai_json.get("summary", {}),
+            "sentiment": {"overall": ai_json.get("sentiment_overall", "neutral")},
+            "ai_output": ai_json,
+            "reminder": reminder
+        }
+
+        save_record(record)
+        return jsonify(record)
+
+    except Exception as e:
+        import traceback
+        print("UPLOAD ERROR >>>", repr(e))
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/records")
+def records():
+    return jsonify(load_records())
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
+
+
+@app.route("/")
+def home_page():
+    return render_template("index.html")
+
+
+@app.route("/ui/upload")
+def upload_ui():
+    return render_template("upload.html")
+
+
+@app.route("/ui/records")
+def records_ui():
+    return render_template("records.html")
+
+
+@app.route("/ui/reminders")
+def reminders_ui():
+    return render_template("reminders.html")
+
+
+# ------------------ RUN ------------------
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

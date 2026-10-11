@@ -1,0 +1,33 @@
+# Virtual environments
+env/
+venv/
+.venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data written by app.py (call transcripts, reminders)
+records.csv
+reminders.csv
+
+# Uploads
+uploads/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Logs
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
