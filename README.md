@@ -34,6 +34,11 @@ The app serves on http://localhost:5000 in debug mode.
 | `/ui/reminders` | GET | Reminders (`templates/reminders.html`) |
 | `/upload` | POST | Multipart form with an `audio` file and optional `name` and `department` fields. Sends the audio to Gemini, saves the result and returns it as JSON. |
 | `/records` | GET | All saved records as JSON |
+| `/records/<id>` | DELETE | Deletes a record and its reminder |
+| `/reminders` | GET | All detected reminders as JSON |
+| `/semantic-search?q=` | GET | Records containing the query words, best matches first (keyword match, not embeddings) |
+| `/export/all` | GET | Downloads `records.csv` |
+| `/export/pdf/<id>` | GET | Downloads one record as a PDF (characters outside Latin-1, such as Devanagari, show as `?`) |
 | `/health` | GET | Returns `{"status": "ok"}` |
 
 Example upload:
@@ -47,6 +52,6 @@ curl -F audio=@call.wav -F name=Rahul -F department=Sales http://localhost:5000/
 On first start the app creates two CSV files in the working directory:
 
 - `records.csv` holds every processed call: transcript, summary, sentiment, the full Gemini output and any reminder detected.
-- `reminders.csv` is set up for reminders. For now the app only writes its header row; detected reminders are stored on each record instead.
+- `reminders.csv` holds each reminder detected in a call ("remind me in 30 minutes"), linked to its record.
 
 These contain real conversation content, so they are gitignored along with `.env` and `uploads/`. Keep them out of commits.
