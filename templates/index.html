@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoIQ Dashboard</title>
+
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background:#0f172a;
+            color:#e2e8f0;
+        }
+
+
+        /* Header */
+        header {
+            width:100%;
+            padding:14px 22px;
+            background:#020617;
+            border-bottom:1px solid #1e293b;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            position:sticky;
+            top:0;
+            z-index:10;
+        }
+
+
+        .logo {
+            font-size:22px;
+            font-weight:700;
+            background: linear-gradient(135deg,#38bdf8,#a855f7);
+            -webkit-background-clip:text;
+            color:transparent;
+        }
+
+
+        nav {
+            display:flex;
+            gap:26px;
+        }
+
+
+        nav a {
+            text-decoration:none;
+            color:#cbd5e1;
+            font-size:15px;
+            display:flex;
+            align-items:center;
+            gap:6px;
+            padding:6px 10px;
+            border-radius:8px;
+            transition:0.3s;
+        }
+
+
+        nav a:hover {
+            background:#1e293b;
+            color:#38bdf8;
+        }
+
+
+        .menu-btn {
+            display:none;
+            font-size:28px;
+            cursor:pointer;
+        }
+
+
+        .mobile-menu {
+            display:none;
+            flex-direction:column;
+            background:#020617;
+            padding:12px 20px;
+            border-bottom:1px solid #1e293b;
+        }
+
+
+        .mobile-menu a {
+            padding:12px 0;
+            color:#cbd5e1;
+            text-decoration:none;
+            font-size:17px;
+            border-bottom:1px solid #1e293b;
+        }
+
+
+        @media (max-width: 768px) {
+            nav { display:none; }
+            .menu-btn { display:block; color:#e2e8f0; }
+        }
+
+
+        /* Container */
+        .container {
+            max-width:1100px;
+            margin:auto;
+            padding:24px;
+        }
+
+
+        /* HERO */
+        .hero {
+            padding:24px;
+            border-radius:16px;
+            background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(129,140,248,0.18));
+            border:1px solid rgba(148,163,184,0.25);
+            margin-bottom:40px;
+        }
+
+
+        .hero h1 {
+            font-size:30px;
+            margin-bottom:12px;
+        }
+
+
+        .hero-text {
+            font-size:16px;
+            color:#cbd5e1;
+            margin-bottom:20px;
+        }
+
+
+        .buttons {
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+
+
+        .btn {
+            padding:10px 18px;
+            border-radius:999px;
+            text-decoration:none;
+            font-size:15px;
+            font-weight:500;
+        }
+
+
+        .btn-primary {
+            background:linear-gradient(135deg,#4f46e5,#38bdf8);
+            color:white;
+        }
+
+
+        .btn-secondary {
+            border:1px solid #334155;
+            background:#1e293b;
+            color:#e2e8f0;
+        }
+
+
+        /* INFO SECTION */
+        .info-section {
+            margin:40px 0;
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:20px;
+        }
+
+
+        .card {
+            padding:20px;
+            border-radius:14px;
+            background:#1e293b;
+            border:1px solid #334155;
+        }
+
+
+        .card h3 {
+            font-size:18px;
+            margin-bottom:10px;
+            color:#38bdf8;
+        }
+
+
+        .card p {
+            font-size:14px;
+            color:#cbd5e1;
+        }
+
+
+        /* FOOTER */
+        footer {
+            background:#020617;
+            padding:22px;
+            text-align:center;
+            border-top:1px solid #1e293b;
+            margin-top:40px;
+        }
+
+
+        footer p {
+            font-size:14px;
+            color:#94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+
+<header>
+    <div class="logo">FemWeb Voice Ai </div>
+
+
+    <nav>
+        <a href="/ui/upload">Upload Audio</a>
+        <a href="/ui/records">Records</a>
+        <a href="/ui/reminders">Reminders</a>
+    </nav>
+
+
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+</header>
+
+
+<div id="mobileMenu" class="mobile-menu">
+    <a href="/ui/upload">Upload Audio</a>
+    <a href="/ui/records">Records & Analytics</a>
+    <a href="/ui/reminders">Reminders</a>
+</div>
+
+
+<div class="container">
+
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Welcome to Your Voice Intelligence Dashboard</h1>
+        <p class="hero-text">
+            Upload audio, analyze conversations, track sentiment, set reminders, and export reports —
+            all powered by advanced AI voice processing.
+        </p>
+
+
+        <div class="buttons">
+            <a href="/ui/upload" class="btn btn-primary"> Upload Audio</a>
+            <a href="/ui/records" class="btn btn-secondary">View Records</a>
+            <a href="/ui/reminders" class="btn btn-secondary">Reminders</a>
+        </div>
+    </div>
+
+
+    <!-- INFO SECTION -->
+    <div class="info-section">
+        <div class="card">
+            <h3> Smart Transcription</h3>
+            <p>Convert voice to text with high accuracy. Supports multiple speakers and automatic punctuation.</p>
+        </div>
+
+
+        <div class="card">
+            <h3>AI Analytics</h3>
+            <p>Generate insights — sentiment, emotions, keywords, summary, topic clustering and more.</p>
+        </div>
+
+
+        <div class="card">
+            <h3>Smart Reminders</h3>
+            <p>Automatically extract tasks from voice and set reminders with one click.</p>
+        </div>
+    </div>
+
+
+</div>
+
+
+<!-- FOOTER -->
+<footer>
+    <p>© 2025 Voice AI Dashboard — Powered by Advanced Speech Intelligence</p>
+</footer>
+
+
+<script>
+    function toggleMenu() {
+        const menu = document.getElementById("mobileMenu");
+        menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+    }
+</script>
+
+
+</body>
+</html>
