@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records & Analytics | Voice Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            min-height: 100vh;
+        }
+
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 24px 32px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--gray-900);
+        }
+
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: var(--gray-700);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+
+        .nav-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+
+        .nav-item.active {
+            background: var(--gray-50);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 24px 32px;
+            max-width: calc(100vw - 260px);
+        }
+
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+
+        .header-title p {
+            color: var(--gray-700);
+            font-size: 15px;
+        }
+
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+
+        /* Search & Filters */
+        .search-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+
+        .select-filter {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            min-width: 160px;
+        }
+
+
+        /* Table */
+        .table-section {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 32px;
+        }
+
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+
+        .table-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+
+        thead {
+            background: var(--gray-50);
+        }
+
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-200);
+            white-space: nowrap;
+        }
+
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: top;
+        }
+
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+
+        .badge-topic {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+
+        /* Buttons */
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+
+        /* Dashboard */
+        .dashboard-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--gray-900);
+        }
+
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .chart-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+        }
+
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+
+        .modal.active {
+            display: flex;
+        }
+
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--gray-700);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+
+        .close-btn:hover {
+            background: var(--gray-100);
+        }
+
+
+        /* Chat Messages */
+        .chat-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            max-width: 80%;
+        }
+
+
+        .message-speaker1 {
+            background: #e0f2fe;
+            margin-right: auto;
+            border-left: 4px solid #0ea5e9;
+        }
+
+
+        .message-speaker2 {
+            background: #f3e8ff;
+            margin-left: auto;
+            border-right: 4px solid #8b5cf6;
+        }
+
+
+        .message-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-900);
+        }
+
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+
+        .stat-label {
+            color: var(--gray-700);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-700);
+        }
+
+
+        .loading i {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+
+        /* Animations */
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                padding: 16px;
+            }
+
+
+            .nav-items {
+                display: flex;
+                overflow-x: auto;
+                gap: 8px;
+                padding-bottom: 8px;
+            }
+
+
+            .nav-item {
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                white-space: nowrap;
+            }
+
+
+            .nav-item.active {
+                border-left: none;
+                border-bottom-color: var(--primary);
+            }
+
+
+            .main-content {
+                max-width: 100%;
+                padding: 20px;
+            }
+        }
+
+
+        @media (max-width: 768px) {
+            .search-bar {
+                flex-direction: column;
+            }
+
+
+            .filters {
+                flex-wrap: wrap;
+            }
+
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-700);
+        }
+
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--gray-300);
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+                <div class="logo-text">VoiceIntel</div>
+            </div>
+            <nav class="nav-items">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+                <a href="/ui/upload" class="nav-item">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload Audio
+                </a>
+                <a href="/ui/records" class="nav-item active">
+                    <i class="fas fa-chart-bar"></i>
+                    Records & Analytics
+                </a>
+                <a href="/ui/reminders" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    Reminders
+                </a>
+            </nav>
+        </aside>
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="page-header">
+                <div class="header-title">
+                    <h1>Records & Analytics</h1>
+                    <p>Advanced search, analysis, and insights from voice data</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="loadRecords()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="exportAll()">
+                        <i class="fas fa-file-export"></i>
+                        Export All
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-bar">
+                    <input type="text"
+                           id="search"
+                           class="search-input"
+                           placeholder="Search transcripts, keywords, or metadata...">
+                    <button class="btn btn-primary" onclick="doSemanticSearch()">
+                        <i class="fas fa-search"></i>
+                        Semantic Search
+                    </button>
+                </div>
+                <div class="filters">
+                    <select id="topicFilter" class="select-filter">
+                        <option value="">All Topics</option>
+                    </select>
+                    <select id="deptFilter" class="select-filter">
+                        <option value="">All Departments</option>
+                    </select>
+                    <select id="sentimentFilter" class="select-filter">
+                        <option value="">All Sentiments</option>
+                        <option value="positive">Positive</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="negative">Negative</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRecords">0</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgSentiment">0.0</div>
+                    <div class="stat-label">Avg. Sentiment</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSpeakers">0</div>
+                    <div class="stat-label">Total Speakers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeTopics">0</div>
+                    <div class="stat-label">Active Topics</div>
+                </div>
+            </div>
+
+
+            <!-- Table Section -->
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>Voice Records</h3>
+                    <div class="table-actions">
+                        <span id="recordCount">Showing 0 records</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Speakers</th>
+                                <th>Topic</th>
+                                <th>Sentiment</th>
+                                <th>Company</th>
+                                <th>Summary</th>
+                                <th>Reminder</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <!-- Dashboard Charts -->
+            <h2 class="dashboard-title">Analytics Dashboard</h2>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Topics Distribution</h4>
+                    <canvas id="topicChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Sentiment Analysis</h4>
+                    <canvas id="sentChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Speaker Activity</h4>
+                    <canvas id="speakerChart"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Conversation Details</h3>
+                <button class="close-btn" onclick="closeChat()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container" id="chatBody">
+                    <!-- Chat content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="downloadJSON()">
+                    <i class="fas fa-download"></i>
+                    Download JSON
+                </button>
+                <button id="pdfBtn" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i>
+                    Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        let RECORDS = [];
+        let CURRENT_RECORD = null;
+
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecords();
+        });
+
+
+        /* ----------------------- LOAD RECORDS ----------------------------- */
+        async function loadRecords() {
+            try {
+                showLoading();
+                const res = await fetch("/records");
+                RECORDS = await res.json();
+                renderTable(RECORDS);
+                populateFilters(RECORDS);
+                updateStats(RECORDS);
+                loadCharts(RECORDS);
+            } catch (error) {
+                console.error('Failed to load records:', error);
+                showError('Failed to load records');
+            } finally {
+                hideLoading();
+            }
+        }
+
+
+        /* ----------------------- SHOW/HIDE LOADING ----------------------------- */
+        function showLoading() {
+            const tbody = document.querySelector("#recordsTable tbody");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading records...</p>
+                    </td>
+                </tr>
+            `;
+        }
+
+
+        function hideLoading() {
+            // Will be replaced by actual data
+        }
+
+
+        function showError(message) {
+            const tbody = document.querySelector("#recordsTable tbody");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${message}</p>
+                        <button class="btn btn-secondary" onclick="loadRecords()">Retry</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+
+        /* ----------------------- POPULATE FILTERS ----------------------------- */
+        function populateFilters(data) {
+            const topics = new Set();
+            const depts = new Set();
+
+
+            data.forEach(r => {
+                topics.add(r.ai_output?.topic || "Unknown");
+                depts.add(r.department || "General");
+            });
+
+
+            const topicSelect = document.getElementById("topicFilter");
+            topicSelect.innerHTML = '<option value="">All Topics</option>' +
+                [...topics].map(t => `<option value="${t}">${t}</option>`).join("");
+
+
+            const deptSelect = document.getElementById("deptFilter");
+            deptSelect.innerHTML = '<option value="">All Departments</option>' +
+                [...depts].map(d => `<option value="${d}">${d}</option>`).join("");
+        }
+
+
+        /* ----------------------- UPDATE STATS ----------------------------- */
+        function updateStats(data) {
+            document.getElementById('totalRecords').textContent = data.length;
+           
+            // Calculate average sentiment
+            let totalSentiment = 0;
+            let sentimentCount = 0;
+           
+            data.forEach(r => {
+                const sentiment = r.ai_output?.sentiment_overall;
+                if (sentiment) {
+                    const score = sentiment === 'positive' ? 1 :
+                                 sentiment === 'negative' ? -1 : 0;
+                    totalSentiment += score;
+                    sentimentCount++;
+                }
+            });
+           
+            const avgScore = sentimentCount > 0 ? (totalSentiment / sentimentCount).toFixed(1) : '0.0';
+            document.getElementById('avgSentiment').textContent = avgScore;
+           
+            // Total speakers
+            const totalSpeakers = data.reduce((acc, r) => {
+                return acc + (r.ai_output?.speakers?.count || 1);
+            }, 0);
+            document.getElementById('totalSpeakers').textContent = totalSpeakers;
+           
+            // Active topics
+            const uniqueTopics = new Set(data.map(r => r.ai_output?.topic).filter(Boolean));
+            document.getElementById('activeTopics').textContent = uniqueTopics.size;
+           
+            // Update record count
+            document.getElementById('recordCount').textContent = `Showing ${data.length} records`;
+        }
+
+
+        /* ----------------------- RENDER TABLE ----------------------------- */
+        function renderTable(data) {
+            const tbody = document.querySelector("#recordsTable tbody");
+           
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No records found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+
+            let html = "";
+
+
+            data.forEach(r => {
+                const company = r.ai_output?.company || detectCompany(r.transcript);
+               
+                const speakers = r.ai_output?.speakers?.details
+                    ?.map(s => s.name || `Speaker ${s.id}`).join(", ")
+                    || `${r.ai_output?.speakers?.count || 1} speakers`;
+
+
+                const summary = r.summary?.short ||
+                               (Array.isArray(r.summary) ? r.summary[0] : r.summary || "—");
+
+
+                const reminder = r.reminder?.remind_time ?
+                    new Date(r.reminder.remind_time).toLocaleDateString() : "—";
+
+
+                const topic = r.ai_output?.topic || "—";
+                const sentiment = r.ai_output?.sentiment_overall || "neutral";
+               
+                // Get sentiment badge class
+                let sentimentBadge = "badge-secondary";
+                if (sentiment === "positive") sentimentBadge = "badge-success";
+                if (sentiment === "negative") sentimentBadge = "badge-danger";
+                if (sentiment === "neutral") sentimentBadge = "badge-warning";
+
+
+                html += `
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: var(--gray-900);">${r.name}</div>
+                        <div style="font-size: 12px; color: var(--gray-700);">${formatDate(r.created_at)}</div>
+                    </td>
+                    <td>${r.department || "—"}</td>
+                    <td>${speakers}</td>
+                    <td><span class="badge badge-topic">${topic}</span></td>
+                    <td><span class="badge ${sentimentBadge}">${sentiment}</span></td>
+                    <td>${company}</td>
+                    <td>${truncateText(summary, 60)}</td>
+                    <td>${reminder}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button onclick="openChat('${r.id}')" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                            <button onclick="exportPdf('${r.id}')" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                            <button onclick="deleteRecord('${r.id}')" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+
+            tbody.innerHTML = html;
+        }
+
+
+        /* ----------------------- HELPER FUNCTIONS ----------------------------- */
+        function detectCompany(text) {
+            if (!text) return "—";
+            const companies = ["Infosys", "TCS", "Wipro", "Google", "Amazon", "Microsoft", "Accenture"];
+            const t = text.toLowerCase();
+            for (const c of companies) {
+                if (t.includes(c.toLowerCase())) return c;
+            }
+            return "—";
+        }
+
+
+        function formatDate(dateString) {
+            if (!dateString) return "";
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+
+        function truncateText(text, maxLength) {
+            if (!text) return "—";
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + "...";
+        }
+
+
+        /* ----------------------- SEARCH & FILTERS ----------------------------- */
+        document.getElementById("search").addEventListener("input", () => applyFilters());
+        document.getElementById("topicFilter").addEventListener("change", () => applyFilters());
+        document.getElementById("deptFilter").addEventListener("change", () => applyFilters());
+        document.getElementById("sentimentFilter").addEventListener("change", () => applyFilters());
+
+
+        function applyFilters() {
+            const q = document.getElementById("search").value.trim().toLowerCase();
+            const topic = document.getElementById("topicFilter").value;
+            const dept = document.getElementById("deptFilter").value;
+            const sentiment = document.getElementById("sentimentFilter").value;
+
+
+            let filtered = RECORDS;
+
+
+            if (topic) {
+                filtered = filtered.filter(r =>
+                    (r.ai_output?.topic || "").toLowerCase() === topic.toLowerCase()
+                );
+            }
+           
+            if (dept) {
+                filtered = filtered.filter(r =>
+                    (r.department || "").toLowerCase() === dept.toLowerCase()
+                );
+            }
+           
+            if (sentiment) {
+                filtered = filtered.filter(r =>
+                    (r.ai_output?.sentiment_overall || "").toLowerCase() === sentiment.toLowerCase()
+                );
+            }
+
+
+            if (q) {
+                filtered = filtered.filter(r => {
+                    const searchString = JSON.stringify(r).toLowerCase();
+                    return searchString.includes(q);
+                });
+            }
+
+
+            renderTable(filtered);
+            updateStats(filtered);
+        }
+
+
+        /* ----------------------- SEMANTIC SEARCH ----------------------------- */
+        async function doSemanticSearch() {
+            const q = document.getElementById("search").value.trim();
+            if (!q) {
+                alert("Please enter a search query");
+                return;
+            }
+
+
+            try {
+                showLoading();
+                const res = await fetch("/semantic-search?q=" + encodeURIComponent(q));
+                const data = await res.json();
+                renderTable(data);
+                updateStats(data);
+            } catch (error) {
+                console.error('Semantic search failed:', error);
+                showError('Search failed');
+            }
+        }
+
+
+        /* ----------------------- CHAT UI ----------------------------- */
+        function openChat(id) {
+            const rec = RECORDS.find(r => r.id === id);
+            if (!rec) return;
+
+
+            CURRENT_RECORD = rec;
+            document.getElementById("modalTitle").innerText = `${rec.name} — Conversation`;
+            const body = document.getElementById("chatBody");
+            body.innerHTML = "";
+
+
+            // Add metadata section
+            body.innerHTML += `
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <div>
+                            <div style="font-size: 12px; color: var(--gray-700); margin-bottom: 4px;">Department</div>
+                            <div style="font-weight: 600;">${rec.department || "—"}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; color: var(--gray-700); margin-bottom: 4px;">Company</div>
+                            <div style="font-weight: 600;">${rec.ai_output?.company || detectCompany(rec.transcript)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; color: var(--gray-700); margin-bottom: 4px;">Sentiment</div>
+                            <div style="font-weight: 600;">${rec.ai_output?.sentiment_overall || "neutral"}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+
+            // Add conversation
+            const lines = (rec.ai_output?.transcription || rec.transcript || "").split("\n");
+            lines.forEach(line => {
+                const m = line.match(/^Speaker\s*(\d+):\s*(.*)/i);
+                if (m) {
+                    const sid = parseInt(m[1]);
+                    const text = m[2];
+                    const cls = sid % 2 === 1 ? "message-speaker1" : "message-speaker2";
+                    body.innerHTML += `
+                        <div class="message ${cls}">
+                            <div class="message-header">Speaker ${sid}</div>
+                            <div>${text}</div>
+                        </div>
+                    `;
+                } else if (line.trim()) {
+                    body.innerHTML += `<div class="message message-speaker1">${line}</div>`;
+                }
+            });
+
+
+            // Set PDF button handler
+            document.getElementById("pdfBtn").onclick = () => exportPdf(id);
+           
+            // Show modal
+            document.getElementById("chatModal").classList.add("active");
+        }
+
+
+        function closeChat() {
+            document.getElementById("chatModal").classList.remove("active");
+        }
+
+
+        /* ----------------------- EXPORT FUNCTIONS ----------------------------- */
+        async function exportPdf(id) {
+            try {
+                const res = await fetch("/export/pdf/" + id);
+                if (!res.ok) {
+                    throw new Error('Export failed');
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `record_${id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('PDF export failed:', error);
+                alert('Failed to export PDF');
+            }
+        }
+
+
+        async function exportAll() {
+            if (!confirm("Export all records as CSV?")) return;
+           
+            try {
+                const res = await fetch("/export/all");
+                if (!res.ok) {
+                    throw new Error('Export failed');
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "all_records.csv";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Failed to export records');
+            }
+        }
+
+
+        function downloadJSON() {
+            if (!CURRENT_RECORD) return;
+            const data = JSON.stringify(CURRENT_RECORD, null, 2);
+            const blob = new Blob([data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "record.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+
+        /* ----------------------- DELETE RECORD ----------------------------- */
+        async function deleteRecord(id) {
+            if (!confirm("Are you sure you want to delete this record? This action cannot be undone.")) return;
+           
+            try {
+                const res = await fetch("/records/" + id, { method: "DELETE" });
+                if (!res.ok) {
+                    throw new Error('Delete failed');
+                }
+                loadRecords();
+            } catch (error) {
+                console.error('Delete failed:', error);
+                alert('Failed to delete record');
+            }
+        }
+
+
+        /* ----------------------- CHARTS ----------------------------- */
+        function loadCharts(data) {
+            // Prepare data for charts
+            const topicData = {};
+            const sentimentData = {
+                positive: 0,
+                neutral: 0,
+                negative: 0
+            };
+            const speakerData = {};
+
+
+            data.forEach(r => {
+                // Topic distribution
+                const topic = r.ai_output?.topic || "Unknown";
+                topicData[topic] = (topicData[topic] || 0) + 1;
+               
+                // Sentiment distribution
+                const sentiment = r.ai_output?.sentiment_overall || "neutral";
+                sentimentData[sentiment] = (sentimentData[sentiment] || 0) + 1;
+               
+                // Speaker count distribution
+                const speakers = r.ai_output?.speakers?.count || 1;
+                speakerData[speakers] = (speakerData[speakers] || 0) + 1;
+            });
+
+
+            renderChart("topicChart", topicData, "Topics", 'doughnut');
+            renderChart("sentChart", sentimentData, "Sentiment", 'bar');
+            renderChart("speakerChart", speakerData, "Speaker Count", 'pie');
+        }
+
+
+        function renderChart(id, data, title, type) {
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+           
+            // Destroy existing chart if it exists
+            if (ctx.chart) {
+                ctx.chart.destroy();
+            }
+
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+
+            const colors = {
+                doughnut: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(99, 102, 241, 0.8)'
+                ],
+                bar: [
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
+                ],
+                pie: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)'
+                ]
+            };
+
+
+            ctx.chart = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors[type] || colors.doughnut,
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

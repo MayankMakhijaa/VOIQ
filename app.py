@@ -137,7 +137,7 @@ def process_audio_through_ai(audio_bytes: bytes, mime_type: str) -> str:
             return response.text or ""
 
         except ServerError as e:
-            if e.status_code == 503 and attempt < 2:
+            if e.code == 503 and attempt < 2:
                 print(f"Gemini overloaded, retrying... ({attempt+1})")
                 time.sleep(2 ** attempt)
             else:
