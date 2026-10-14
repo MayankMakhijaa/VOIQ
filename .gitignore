@@ -11,6 +11,7 @@ venv/
 # Runtime data written by app.py (call transcripts, reminders)
 records.csv
 reminders.csv
+embeddings.json
 
 # Uploads
 uploads/
