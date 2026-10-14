@@ -13,6 +13,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from google.genai.errors import ServerError
 from fpdf import FPDF
 
@@ -33,6 +34,10 @@ CORS(app)
 # ------------------ FILES ------------------
 CSV_FILE = "records.csv"
 REMINDER_FILE = "reminders.csv"
+EMBED_FILE = "embeddings.json"
+EMBED_MODEL = "gemini-embedding-001"
+SEARCH_LIMIT = 10
+FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
@@ -253,12 +258,72 @@ def record_text(record: Dict[str, Any]) -> str:
         " ".join(ai.get("keywords", []) or []) if isinstance(ai, dict) else "",
         json.dumps(summary, ensure_ascii=False),
     ]
-    return " ".join(str(p) for p in parts).lower()
+    return " ".join(str(p) for p in parts)
 
 
-def pdf_safe(text: Any) -> str:
-    # Built-in PDF fonts only cover Latin-1; replace anything else.
-    return str(text or "").encode("latin-1", "replace").decode("latin-1")
+# ------------------ SEMANTIC SEARCH ------------------
+def embed(texts: List[str], task_type: str) -> List[List[float]]:
+    vectors = []
+    for i in range(0, len(texts), 100):
+        response = client.models.embed_content(
+            model=EMBED_MODEL,
+            contents=texts[i:i + 100],
+            config=types.EmbedContentConfig(task_type=task_type, output_dimensionality=768)
+        )
+        vectors.extend(e.values for e in response.embeddings)
+    return vectors
+
+
+def load_embeddings() -> Dict[str, List[float]]:
+    if not os.path.exists(EMBED_FILE):
+        return {}
+    with open(EMBED_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_embeddings(embeddings: Dict[str, List[float]]):
+    with open(EMBED_FILE, "w", encoding="utf-8") as f:
+        json.dump(embeddings, f)
+
+
+def record_embeddings(records: List[Dict[str, Any]]) -> Dict[str, List[float]]:
+    """Embeddings for every record, computing and caching any that are missing."""
+    embeddings = load_embeddings()
+    missing = [r for r in records if r["id"] not in embeddings]
+    if missing:
+        vectors = embed([record_text(r)[:6000] for r in missing], "RETRIEVAL_DOCUMENT")
+        for record, vector in zip(missing, vectors):
+            embeddings[record["id"]] = vector
+        save_embeddings(embeddings)
+    return embeddings
+
+
+def cosine(a: List[float], b: List[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
+    return dot / norm if norm else 0.0
+
+
+def keyword_search(query: str, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    terms = query.lower().split()
+    scored = []
+    for record in records:
+        text = record_text(record).lower()
+        score = sum(text.count(t) for t in terms)
+        if score:
+            scored.append((score, record))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [r for _, r in scored]
+
+
+# ------------------ PDF ------------------
+def new_pdf() -> FPDF:
+    # Noto Sans Devanagari covers Latin and Devanagari; shaping joins conjuncts.
+    pdf = FPDF()
+    pdf.add_font("Noto", "", os.path.join(FONT_DIR, "NotoSansDevanagari-Regular.ttf"))
+    pdf.add_font("Noto", "B", os.path.join(FONT_DIR, "NotoSansDevanagari-Bold.ttf"))
+    pdf.set_text_shaping(True)
+    return pdf
 
 
 def write_line(pdf: FPDF, height: float, text: str):
@@ -336,6 +401,9 @@ def delete_record(record_id):
     reminder = record.get("reminder")
     if isinstance(reminder, dict) and reminder.get("id"):
         remove_rows(REMINDER_FILE, {reminder["id"]})
+    embeddings = load_embeddings()
+    if embeddings.pop(record_id, None) is not None:
+        save_embeddings(embeddings)
     return jsonify({"deleted": record_id})
 
 
@@ -346,18 +414,25 @@ def reminders():
 
 @app.route("/semantic-search")
 def semantic_search():
-    # Keyword search ranked by how many query words each record contains.
-    terms = [t for t in request.args.get("q", "").lower().split() if t]
-    if not terms:
+    # Ranks records by meaning using Gemini embeddings; falls back to
+    # keyword matching if the embedding call fails.
+    query = request.args.get("q", "").strip()
+    records = load_records()
+    if not query or not records:
         return jsonify([])
-    scored = []
-    for record in load_records():
-        text = record_text(record)
-        score = sum(text.count(t) for t in terms)
-        if score:
-            scored.append((score, record))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return jsonify([r for _, r in scored])
+    try:
+        embeddings = record_embeddings(records)
+        query_vector = embed([query], "RETRIEVAL_QUERY")[0]
+    except Exception as e:
+        print("SEMANTIC SEARCH FALLBACK >>>", repr(e))
+        return jsonify(keyword_search(query, records))
+
+    scored = sorted(
+        records,
+        key=lambda r: cosine(query_vector, embeddings[r["id"]]),
+        reverse=True
+    )
+    return jsonify(scored[:SEARCH_LIMIT])
 
 
 @app.route("/export/all")
@@ -381,12 +456,12 @@ def export_pdf(record_id):
     ai = record.get("ai_output") if isinstance(record.get("ai_output"), dict) else {}
     summary = record.get("summary") if isinstance(record.get("summary"), dict) else {}
 
-    pdf = FPDF()
+    pdf = new_pdf()
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 16)
-    write_line(pdf, 10, pdf_safe(f"{record.get('name', '')} - Conversation"))
-    pdf.set_font("Helvetica", size=10)
-    write_line(pdf, 6, pdf_safe(
+    pdf.set_font("Noto", "B", 16)
+    write_line(pdf, 10, f"{record.get('name', '')} - Conversation")
+    pdf.set_font("Noto", size=10)
+    write_line(pdf, 6, (
         f"Department: {record.get('department', '')}\n"
         f"Date: {record.get('timestamp', '')}\n"
         f"Topic: {ai.get('topic', '')}\n"
@@ -402,10 +477,10 @@ def export_pdf(record_id):
         if not body:
             continue
         pdf.ln(4)
-        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_font("Noto", "B", 12)
         write_line(pdf, 8, title)
-        pdf.set_font("Helvetica", size=10)
-        write_line(pdf, 6, pdf_safe(body))
+        pdf.set_font("Noto", size=10)
+        write_line(pdf, 6, str(body))
 
     return send_file(
         io.BytesIO(bytes(pdf.output())),
